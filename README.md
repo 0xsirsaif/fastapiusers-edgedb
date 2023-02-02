@@ -1,18 +1,5 @@
 # FastAPI Users - Database adapter for EdgeDB
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/frankie567/fastapi-users/master/logo.svg?sanitize=true" alt="FastAPI Users">
-</p>
-
-<p align="center">
-    <em>Ready-to-use and customizable users management for FastAPI</em>
-</p>
-
-[//]: # ([![build]&#40;https://github.com/fastapi-users/fastapi-users-db-edgedb/workflows/Build/badge.svg&#41;]&#40;https://github.com/fastapi-users/fastapi-users/actions&#41;)
-[//]: # ([![codecov]&#40;https://codecov.io/gh/fastapi-users/fastapi-users-db-edgedb/branch/master/graph/badge.svg&#41;]&#40;https://codecov.io/gh/fastapi-users/fastapi-users-db-edgedb&#41;)
-[//]: # ([![PyPI version]&#40;https://badge.fury.io/py/fastapi-users-db-edgedb.svg&#41;]&#40;https://badge.fury.io/py/fastapi-users-db-edgedb&#41;)
-[//]: # ([![Downloads]&#40;https://pepy.tech/badge/fastapi-users-db-edgedb&#41;]&#40;https://pepy.tech/project/fastapi-users-db-edgedb&#41;)
-
 ---
 
 **Documentation**: <a href="https://fastapi-users.github.io/fastapi-users/" target="_blank">https://fastapi-users.github.io/fastapi-users/</a>

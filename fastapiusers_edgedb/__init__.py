@@ -8,7 +8,7 @@ from fastapi_users.models import ID, OAP, UP
 
 from fastapiusers_edgedb import user_api
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 class EdgeDBUserDatabase(Generic[UP, ID], BaseUserDatabase[UP, ID]):

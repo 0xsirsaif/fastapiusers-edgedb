@@ -21,13 +21,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install flit
         flit install --deps develop
+
+    - name: Setup Edgedb
+      uses: edgedb/setup-edgedb@v1
+      with:
+      server-dsn: edgedb://localhost:5656
+      instance-name: ci_edgedb_instance  # optional
+    - run: edgedb query "SELECT 'Hello from GitHub Actions'"
+
     - name: Test with pytest
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
         pytest --cov=fastapiusers_edgedb/
         codecov
-    - name: Build and install it on system host
+    - name: Build and install flit on system host
       run: |
         flit build
         flit install --python $(which python)

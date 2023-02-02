@@ -1,19 +1,9 @@
 import dataclasses
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, Dict
 
 import pytest
 
 from fastapiusers_edgedb import EdgeDBUserDatabase
-
-
-@pytest.fixture
-async def edgedb_user_db(edgedb_db) -> AsyncGenerator[EdgeDBUserDatabase, None]:
-    yield EdgeDBUserDatabase(edgedb_db)
-
-
-@pytest.fixture
-async def edgedb_user_db_oauth(edgedb_db) -> AsyncGenerator[EdgeDBUserDatabase, None]:
-    yield EdgeDBUserDatabase(edgedb_db)
 
 
 @pytest.mark.asyncio
@@ -21,9 +11,6 @@ async def test_queries(
     edgedb_user_db: EdgeDBUserDatabase, oauth_account1: Dict[str, Any]
 ):
     user_create = {
-        "first_name": "Mohamed",
-        "last_name": "Saif",
-        "username": "0xsirsaifaa",
         "email": "lancelot@camelot.bt",
         "is_active": True,
         "is_superuser": False,
@@ -96,9 +83,6 @@ async def test_email_query(
     user_create = {
         "email": email,
         "hashed_password": "guinevere",
-        "first_name": "Mohamed",
-        "last_name": "Saif",
-        "username": "0xsirsaifaa",
         "is_active": True,
         "is_superuser": False,
         "is_verified": False,
@@ -119,9 +103,6 @@ async def test_insert_existing_email(edgedb_user_db: EdgeDBUserDatabase):
     user_create = {
         "email": "lancelot@camelot.bt",
         "hashed_password": "guinevere",
-        "first_name": "Mohamed",
-        "last_name": "Saif",
-        "username": "0xsirsaifaa",
         "is_active": True,
         "is_superuser": False,
         "is_verified": False,
@@ -138,9 +119,6 @@ async def test_queries_custom_fields(edgedb_user_db: EdgeDBUserDatabase):
     user_create = {
         "email": "lancelot@camelot.bt",
         "hashed_password": "guinevere",
-        "first_name": "Lancelot",
-        "last_name": "Saif",
-        "username": "0xsirsaifaa",
         "is_active": True,
         "is_superuser": False,
         "is_verified": False,
@@ -151,7 +129,6 @@ async def test_queries_custom_fields(edgedb_user_db: EdgeDBUserDatabase):
     id_user = await edgedb_user_db.get(user.id)
     assert id_user is not None
     assert id_user.id == user.id
-    assert id_user.first_name == user.first_name
 
 
 @pytest.mark.asyncio
@@ -163,9 +140,6 @@ async def test_queries_oauth(
     user_create = {
         "email": "lancelot@camelot.bt",
         "hashed_password": "guinevere",
-        "first_name": "Mohamed",
-        "last_name": "Saif",
-        "username": "0xsirsaifaa",
         "is_active": True,
         "is_superuser": False,
         "is_verified": False,

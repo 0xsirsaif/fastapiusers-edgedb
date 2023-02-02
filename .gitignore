@@ -112,3 +112,9 @@ ENV/
 
 # .idea
 .idea/
+
+# edgedb-py generated file
+generated_async_edgeql.py
+
+# build
+fastapiusers-edgedb-*

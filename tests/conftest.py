@@ -1,12 +1,32 @@
 import asyncio
-from typing import Any, Dict
+from typing import Any, AsyncGenerator, Dict
 
 import edgedb
 import pytest
 
+from fastapiusers_edgedb import EdgeDBUserDatabase
+from fastapiusers_edgedb.access_token import EdgeDBAccessTokenDatabase
+
 
 class RollBack(Exception):
     pass
+
+
+@pytest.fixture
+async def edgedb_user_db(edgedb_db) -> AsyncGenerator[EdgeDBUserDatabase, None]:
+    yield EdgeDBUserDatabase(edgedb_db)
+
+
+@pytest.fixture
+async def edgedb_user_db_oauth(edgedb_db) -> AsyncGenerator[EdgeDBUserDatabase, None]:
+    yield EdgeDBUserDatabase(edgedb_db)
+
+
+@pytest.fixture
+async def edgedb_access_token_db(
+    edgedb_db,
+) -> AsyncGenerator[EdgeDBAccessTokenDatabase, None]:
+    yield EdgeDBAccessTokenDatabase(edgedb_db)
 
 
 @pytest.fixture(scope="session")

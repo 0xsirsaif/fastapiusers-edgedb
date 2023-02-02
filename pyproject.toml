@@ -14,6 +14,9 @@ build-backend = "flit_core.buildapi"
 [tool.flit.module]
 name = "fastapiusers_edgedb"
 
+[tool.flit.sdist]
+exclude = ["tests/", "dbschema/", "fastapiusers_edgedb/queries/", "fastapiusers-edgedb-*"]
+
 # project’s core metadata
 [project]
 name = "fastapiusers-edgedb"
@@ -27,7 +30,7 @@ readme = "README.md"
 dynamic = ["version"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Framework :: FastAPI",
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",

@@ -1,5 +1,5 @@
 module default {
-    type EdgeBaseUser {
+    type User {
         required property email -> str {
             constraint exclusive;
             constraint regexp(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$");
@@ -10,7 +10,7 @@ module default {
         required property is_superuser -> bool;
         required property is_verified -> bool;
 
-        multi link oauth_accounts -> EdgeBaseOAuthUser {
+        multi link oauth_accounts -> OAuthUser {
             # ensures a one-to-many relationship
             constraint exclusive;
             # Deleting this Object (User) will unconditionally delete linked objects (oauth)
@@ -26,7 +26,7 @@ module default {
 
     }
 
-    type EdgeBaseOAuthUser {
+    type OAuthUser {
         required property account_email -> str {
             constraint regexp(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$");
         }

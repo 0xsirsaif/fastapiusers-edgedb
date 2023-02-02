@@ -27,7 +27,7 @@ async def create_user(
           is_verified := <bool>$is_verified,
           hashed_password := <str>$hashed_password
         select (
-          insert EdgeBaseUser {
+          insert User {
             email := email,
             is_active := is_active,
             is_superuser := is_superuser,
@@ -53,7 +53,7 @@ async def get_user(
 ) -> UP:
     return await executor.query_single(
         f"""
-        select EdgeBaseUser {{
+        select User {{
             id, email, is_active, is_superuser, is_verified, hashed_password,
             oauth_accounts: {{
                 access_token,
@@ -91,7 +91,7 @@ async def update_user(
           is_verified := <bool>$is_verified,
           hashed_password := <str>$hashed_password
         select (
-            update EdgeBaseUser filter .email = <str>$email
+            update User filter .email = <str>$email
             set {
                 email := email,
                 is_active := is_active,
@@ -116,7 +116,7 @@ async def delete_user(
 ) -> UP | None:
     return await executor.query_single(
         """\
-        with user := (delete EdgeBaseUser filter .id = <uuid>$id)
+        with user := (delete User filter .id = <uuid>$id)
         select user {id, email, is_active, is_superuser, is_verified};\
         """,
         id=id,
@@ -128,7 +128,7 @@ async def get_by_oauth_account(
 ) -> UP:
     return await executor.query_single(
         """\
-        select EdgeBaseUser {
+        select User {
             id, is_active, is_superuser, is_verified, hashed_password,
             oauth_accounts: {
                 access_token,
@@ -139,9 +139,9 @@ async def get_by_oauth_account(
                 account_id,
             }
         }
-        filter contains(EdgeBaseUser.oauth_accounts.oauth_name, <str>$oauth_name)
+        filter contains(User.oauth_accounts.oauth_name, <str>$oauth_name)
         and
-        contains(EdgeBaseUser.oauth_accounts.account_id, <str>$account_id)
+        contains(User.oauth_accounts.account_id, <str>$account_id)
         limit 1
         """,
         oauth_name=oauth_name,
@@ -169,7 +169,7 @@ async def insert_oauth_account(
           account_id := <str>$account_id,
           account_email := <str>$account_email,
         select (
-            insert EdgeBaseOAuthUser {
+            insert OAuthUser {
                 oauth_name := oauth_name,
                 access_token := access_token,
                 expires_at := expires_at,
@@ -204,7 +204,7 @@ async def add_oauth_account(
         with
             user_id := <uuid>$user_id,
             account := (
-                insert EdgeBaseOAuthUser {
+                insert OAuthUser {
                     oauth_name := <str>$oauth_name,
                     access_token := <str>$access_token,
                     expires_at := <int32>$expires_at,
@@ -214,7 +214,7 @@ async def add_oauth_account(
                 }
             ),
             user := (
-              update EdgeBaseUser filter .id = <uuid>$user_id
+              update User filter .id = <uuid>$user_id
               set {
                 oauth_accounts += account
               }
@@ -247,7 +247,7 @@ async def update_oauth_account(
     with
         user_id := <uuid>$user_id,
         updated_account := (
-                update EdgeBaseOAuthUser
+                update OAuthUser
                 filter .oauth_name = <str>$oauth_name
                 set {
                   oauth_name := <str>$oauth_name,
@@ -259,7 +259,7 @@ async def update_oauth_account(
                 }
         ),
         user := (
-                update EdgeBaseUser
+                update User
                 filter .id = <uuid>$user_id
                 set {
                     oauth_accounts += (
@@ -304,7 +304,7 @@ async def get_user_by_access_token(
 ) -> List[UP]:
     return await executor.query(
         f"""
-        select EdgeBaseUser {{
+        select User {{
             id,
             access_tokens: {{
                 token, created_at
@@ -332,7 +332,7 @@ async def create_access_token(
                 }
             ),
             user := (
-              update EdgeBaseUser filter .id = <uuid>$user_id
+              update User filter .id = <uuid>$user_id
               set {
                 access_tokens += access_token
               }
@@ -364,7 +364,7 @@ async def update_token(
                 }
             ),
             user := (
-                update EdgeBaseUser filter .id = <uuid>$user_id
+                update User filter .id = <uuid>$user_id
                 set {
                     access_tokens += (
                       updated_access_token
@@ -384,7 +384,7 @@ async def delete_token(executor: edgedb.AsyncIOExecutor, token: str):
     user_id = user[0].id
     return await executor.query(
         """
-        update EdgeBaseUser filter .id = <uuid>$user_id
+        update User filter .id = <uuid>$user_id
         set {
             access_tokens -= (delete EdgeAccessTokenUser filter .token = <str>$token)
         }

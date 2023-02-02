@@ -22,12 +22,9 @@ jobs:
         pip install flit
         flit install --deps develop
 
+    - uses: edgedb/setup-edgedb@v1
     - name: Setup Edgedb
-      uses: edgedb/setup-edgedb@v1
-      with:
-        server-dsn: edgedb://localhost:5656
-        instance-name: ci_edgedb_instance  # optional
-    - run: edgedb query "SELECT 'Hello from GitHub Actions'"
+      run: edgedb query "SELECT 'Hello from GitHub Actions'"
 
     - name: Test with pytest
       env:

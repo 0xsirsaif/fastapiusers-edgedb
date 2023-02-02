@@ -27,9 +27,10 @@ readme = "README.md"
 dynamic = ["version"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Framework :: FastAPI",
     "Framework :: AsyncIO",
+    "Framework :: EdgeDB",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",

@@ -2,30 +2,25 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import List
 
 import edgedb
 from fastapi_users.authentication.strategy.db import AP
-from fastapi_users.models import UP
+from fastapi_users.models import ID, UP
 
 
 async def create_user(
     executor: edgedb.AsyncIOExecutor,
     *,
-    first_name: str,
-    last_name: str,
-    username: str,
     email: str,
-    is_active: bool,
-    is_superuser: bool,
-    is_verified: bool,
     hashed_password: str,
+    is_active: bool = True,
+    is_superuser: bool = False,
+    is_verified: bool = False,
 ) -> UP:
     return await executor.query_single(
         """\
         with
-          first_name := <str>$first_name,
-          last_name := <str>$last_name,
-          username := <str>$username,
           email := <str>$email,
           is_active := <bool>$is_active,
           is_superuser := <bool>$is_superuser,
@@ -33,20 +28,14 @@ async def create_user(
           hashed_password := <str>$hashed_password
         select (
           insert EdgeBaseUser {
-            first_name := first_name,
-            last_name := last_name,
-            username := username,
             email := email,
             is_active := is_active,
             is_superuser := is_superuser,
             is_verified := is_verified,
             hashed_password := hashed_password
           }
-        ) {first_name, last_name, username, email, is_active, is_superuser, is_verified};\
+        ) {id, email, is_active, is_superuser, is_verified};\
         """,
-        first_name=first_name,
-        last_name=last_name,
-        username=username,
         email=email,
         is_active=is_active,
         is_superuser=is_superuser,
@@ -60,13 +49,12 @@ async def get_user(
     *,
     cast: str,
     key: str,
-    value: str,
-) -> UP | None:
+    value: str | ID,
+) -> UP:
     return await executor.query_single(
         f"""
         select EdgeBaseUser {{
-            first_name, last_name, username, email,
-            is_active, is_superuser, is_verified, hashed_password,
+            id, email, is_active, is_superuser, is_verified, hashed_password,
             oauth_accounts: {{
                 access_token,
                 expires_at,
@@ -74,6 +62,10 @@ async def get_user(
                 account_email,
                 oauth_name,
                 account_id,
+            }},
+            access_tokens: {{
+                token,
+                created_at,
             }}
         }}
         filter .{key} = <{cast}>'{value}';
@@ -84,9 +76,6 @@ async def get_user(
 async def update_user(
     executor: edgedb.AsyncIOExecutor,
     *,
-    first_name: str,
-    last_name: str,
-    username: str,
     email: str,
     is_active: bool,
     is_superuser: bool,
@@ -96,31 +85,22 @@ async def update_user(
     return await executor.query_single(
         """\
         with
-          first_name := <str>$first_name,
-          last_name := <str>$last_name,
-          username := <str>$username,
           email := <str>$email,
           is_active := <bool>$is_active,
           is_superuser := <bool>$is_superuser,
           is_verified := <bool>$is_verified,
           hashed_password := <str>$hashed_password
         select (
-            update EdgeBaseUser filter .username = <str>$username
+            update EdgeBaseUser filter .email = <str>$email
             set {
-                first_name := first_name,
-                last_name := last_name,
-                username := username,
                 email := email,
                 is_active := is_active,
                 is_superuser := is_superuser,
                 is_verified := is_verified,
                 hashed_password := hashed_password
             }
-        ) {first_name, last_name, username, email, is_active, is_superuser, is_verified};\
+        ) {id, email, is_active, is_superuser, is_verified};\
         """,
-        first_name=first_name,
-        last_name=last_name,
-        username=username,
         email=email,
         is_active=is_active,
         is_superuser=is_superuser,
@@ -137,7 +117,7 @@ async def delete_user(
     return await executor.query_single(
         """\
         with user := (delete EdgeBaseUser filter .id = <uuid>$id)
-        select user {first_name, last_name, username, email, is_active, is_superuser, is_verified};\
+        select user {id, email, is_active, is_superuser, is_verified};\
         """,
         id=id,
     )
@@ -149,8 +129,7 @@ async def get_by_oauth_account(
     return await executor.query_single(
         """\
         select EdgeBaseUser {
-            first_name, last_name, username, email,
-            is_active, is_superuser, is_verified, hashed_password,
+            id, is_active, is_superuser, is_verified, hashed_password,
             oauth_accounts: {
                 access_token,
                 expires_at,
@@ -239,7 +218,7 @@ async def add_oauth_account(
               set {
                 oauth_accounts += account
               }
-          )
+            )
         select (user_id, account, user)\
         """,
         user_id=user_id,
@@ -263,7 +242,7 @@ async def update_oauth_account(
     account_id: str = "",
     account_email: str = "",
 ):
-    return await executor.query_single(
+    return await executor.query(
         """
     with
         user_id := <uuid>$user_id,
@@ -306,17 +285,33 @@ async def get_access_token(
     cast: str,
     key: str,
     value: str,
-    max_age: datetime = None,
+    max_age: datetime | None = datetime.now(timezone.utc),
 ) -> AP | None:
     date_filter = f"and .created_at >= <datetime>'{max_age}'" if max_age else ""
     return await executor.query_single(
         f"""
         select EdgeAccessTokenUser {{
-            token, created_at, user_id
+            token, created_at
         }}
         filter .{key} = <{cast}>'{value}'
         {date_filter};
     """
+    )
+
+
+async def get_user_by_access_token(
+    executor: edgedb.AsyncIOExecutor, access_token: str
+) -> List[UP]:
+    return await executor.query(
+        f"""
+        select EdgeBaseUser {{
+            id,
+            access_tokens: {{
+                token, created_at
+            }}
+        }} filter .access_tokens.token = <str>$access_token
+    """,
+        access_token=access_token,
     )
 
 
@@ -328,13 +323,22 @@ async def create_access_token(
 ) -> AP:
     return await executor.query_single(
         """
-        select (
-            insert EdgeAccessTokenUser {
-                token := <str>$token,
-                created_at := <datetime>$created_at,
-                user_id := <str>$user_id,
-            }
-        ) {token, created_at, user_id}
+        with
+            user_id := <uuid>$user_id,
+            access_token := (
+                insert EdgeAccessTokenUser {
+                    token := <str>$token,
+                    created_at := <datetime>$created_at,
+                }
+            ),
+            user := (
+              update EdgeBaseUser filter .id = <uuid>$user_id
+              set {
+                access_tokens += access_token
+              }
+            )
+
+        select (user_id, access_token, user)
     """,
         token=token,
         created_at=created_at,
@@ -344,32 +348,47 @@ async def create_access_token(
 
 async def update_token(
     executor: edgedb.AsyncIOExecutor,
+    user_id: uuid.UUID,
     token: str,
-    user_id: str,
     created_at: datetime = datetime.now(timezone.utc),
 ) -> AP:
     return await executor.query_single(
         """
-        select (
-            update EdgeAccessTokenUser filter .token = <str>$token
-            set {
-                token := <str>$token,
-                created_at := <datetime>$created_at,
-                user_id := <str>$user_id,
-            }
-        ) {token, created_at, user_id}
+        with
+            user_id := <uuid>$user_id,
+            updated_access_token := (
+                update EdgeAccessTokenUser filter .token = <str>$token
+                set {
+                  token := <str>$token,
+                  created_at := <datetime>$created_at,
+                }
+            ),
+            user := (
+                update EdgeBaseUser filter .id = <uuid>$user_id
+                set {
+                    access_tokens += (
+                      updated_access_token
+                    )
+                }
+            )
+        select (user_id, updated_access_token, user)
     """,
+        user_id=user_id,
         token=token,
         created_at=created_at,
-        user_id=user_id,
     )
 
 
 async def delete_token(executor: edgedb.AsyncIOExecutor, token: str):
+    user = await get_user_by_access_token(executor, token)
+    user_id = user[0].id
     return await executor.query(
         """
-        delete EdgeAccessTokenUser
-        filter .token = <str>$token
+        update EdgeBaseUser filter .id = <uuid>$user_id
+        set {
+            access_tokens -= (delete EdgeAccessTokenUser filter .token = <str>$token)
+        }
     """,
         token=token,
+        user_id=user_id,
     )

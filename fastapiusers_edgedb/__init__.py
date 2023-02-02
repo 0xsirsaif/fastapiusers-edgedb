@@ -50,7 +50,7 @@ class EdgeDBUserDatabase(Generic[UP, ID], BaseUserDatabase[UP, ID]):
                 **{
                     k: v
                     for k, v in user_dict.items()
-                    if k not in ["id", "oauth_accounts"]
+                    if k not in ["id", "oauth_accounts", "access_tokens"]
                 }
             )
         return user
@@ -75,7 +75,7 @@ class EdgeDBUserDatabase(Generic[UP, ID], BaseUserDatabase[UP, ID]):
 
     async def get_by_oauth_account(self, oauth: str, account_id: str) -> Optional[UP]:
         """Get a single user by OAuth account id."""
-        oauth_account = await user_api.get_by_oauth_account(
+        oauth_account: UP = await user_api.get_by_oauth_account(
             self.client, oauth_name=oauth, account_id=account_id
         )
         return oauth_account
@@ -110,7 +110,4 @@ class EdgeDBUserDatabase(Generic[UP, ID], BaseUserDatabase[UP, ID]):
             user = await user_api.get_user(
                 self.client, cast="uuid", key="id", value=user.id
             )
-            # print("?????????????????????????????????????????")
-            # print(user)
-            # print("?????????????????????????????????????????")
         return user

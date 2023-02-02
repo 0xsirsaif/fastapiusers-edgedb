@@ -1,7 +1,7 @@
 """FastAPI Users access token database adapter for EdgeDB."""
 import dataclasses
 from datetime import datetime
-from typing import Any, Dict, Generic, Optional
+from typing import Any, Dict, Generic, List, Optional
 
 from edgedb import AsyncIOClient
 from fastapi_users.authentication.strategy.db import AP, AccessTokenDatabase
@@ -19,23 +19,26 @@ class EdgeDBAccessTokenDatabase(Generic[AP], AccessTokenDatabase[AP]):
         self, token: str, max_age: Optional[datetime] = None
     ) -> Optional[AP]:
         """Get a single access token by token."""
-        access_token = await user_api.get_access_token(
+        access_token: AP | None = await user_api.get_access_token(
             self.client, cast="str", key="token", value=token, max_age=max_age
         )
         return access_token
 
     async def create(self, create_dict: Dict[str, Any]) -> AP:
         """Create an access token."""
-        access_token = await user_api.create_access_token(self.client, **create_dict)
+        access_token: AP = await user_api.create_access_token(
+            self.client, **create_dict
+        )
         return access_token
 
     async def update(self, access_token: AP, update_dict: Dict[str, Any]) -> AP:
         """Update an access token."""
-        access_token = await user_api.get_access_token(
-            self.client, cast="str", key="token", value=access_token.token
+        user = await user_api.get_user_by_access_token(
+            self.client, access_token=access_token.token
         )
-        if access_token:
+        if user:
             update_dict.update(dataclasses.asdict(access_token))
+            update_dict["user_id"] = user[0].id
             access_token = await user_api.update_token(
                 self.client, **{k: v for k, v in update_dict.items() if k not in ["id"]}
             )
